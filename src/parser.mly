@@ -4,10 +4,7 @@
 %token TIMES
 %token EOF
 
-%left EQUAL
-%left PLUS MINUS
-
-%start <Eq.t list> main
+%start <Eq.Expr.t list> main
 
 %%
 
@@ -16,18 +13,29 @@ main:
 
 eq:
 | lhs = handside EQUAL rhs = handside {
-    List.concat (lhs :: List.map (fun e -> Eq.revSign e) rhs :: [] )
+    List.concat (lhs :: List.map (fun e -> Eq.Expr.revSign e) rhs :: [] )
 }
 
 handside:
-| e1 = expr PLUS e2 = expr { e1 :: e2 :: [] }
-| e1 = expr MINUS e2 = expr { e1 :: Eq.revSign e2 :: [] }
+| o = op { o :: [] }
+| o = op m = handside { o :: m }
+
+op:
+| e = expr { e }
+| PLUS e2 = expr { e2 }
+| MINUS e2 = expr { Eq.Expr.revSign e2 }
 
 expr:
-| t1 = token TIMES t2 = token { Eq.expr_of_coef_and_var t1 t2 }
-| t = token { Eq.expr_of_coef_or_var t }
+| t = token { Eq.Expr.of_token t }
+| t1 = token TIMES t2 = token { Eq.Expr.of_token2 t1 t2 }
 
 token:
-| coef = COEF { Eq.coef coef }
-| var = VAR { Eq.var var }
-
+| coef = COEF {
+    let c = float_of_string coef in
+    Eq.Token.Coef (Eq.Sign.of_float c, abs_float c)
+}
+| var = VAR {
+    let sign, degree = var in
+    let i = int_of_string degree in
+    Eq.Token.Var (Eq.Sign.of_string sign, i)
+}

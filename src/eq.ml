@@ -36,32 +36,40 @@ module Sign =
             in aux l Plus
     end
 
-type t = Coef of Sign.t * float
-       | Var of Sign.t * int
-       | Expr of Sign.t * float * int
-       | Equal
+module Token =
+    struct
+        type t = Coef of Sign.t * float
+               | Var of Sign.t * int
+    end
 
-let rec to_string t = match t with
-    | Coef ( sign, f )             -> string_of_float (Sign.to_float sign *. f)
-    | Var ( sign, degree )         -> Sign.to_string sign ^ "X" ^ (if degree <> 1 then "^" ^ string_of_int degree else "")
-    | Expr ( sign, coef, degree )  -> to_string (Coef (sign, coef)) ^ " * " ^ to_string (Var (Sign.Plus, degree ))
-    | Equal                        -> "="
+module Expr =
+    struct
+        type t = Sign.t * float * int
 
-let coef s = let f = float_of_string s in Coef (Sign.of_float f, abs_float f)
-let var (sign, degree) = Var ( Sign.of_string sign, int_of_string degree )
+        let to_string t = match t with
+            | sign, coef, degree -> Sign.to_string sign ^ string_of_float coef ^ if degree = 0 then "" else " * X" ^ if degree = 1 then "" else "^" ^ string_of_int degree
 
-let expr_of_coef_and_var t1 t2 = match t1, t2 with
-    | Coef (s1, coef), Var (s2, degree)   -> Expr (Sign.add s1 s2, coef, degree)
-    | Var (s2, degree), Coef (s1, coef) -> Expr (Sign.add s1 s2, coef, degree)
-    | _ -> invalid_arg (to_string t1 ^ " && " ^ to_string t2)
+        let of_token t = match t with
+            | Token.Coef (sign, f)     -> ( sign, f, 0 )
+            | Token.Var (sign, degree) -> ( sign, 1., degree )
 
-let expr_of_coef_or_var t = match t with
-    | Coef (sign, f)     -> Expr ( sign, f, 0 )
-    | Var (sign, degree) -> Expr ( sign, 1., degree )
-    | _ as e             -> e
+        let of_token2 t1 t2 =  match t1, t2 with
+            | Token.Coef (s1, coef), Token.Var (s2, degree) -> (Sign.add s1 s2, coef, degree)
+            | Token.Var (s2, degree), Token.Coef (s1, coef) -> (Sign.add s1 s2, coef, degree)
+            | _ -> invalid_arg "Expr.of_tokens"
 
-let revSign t = match t with
-    | Coef (s, f) -> Coef (Sign.rev s, f)
-    | Var (s, d) -> Var (Sign.rev s, d)
-    | Expr (s, f, d) -> Expr (Sign.rev s, f, d)
-    | _ as e -> e
+        let revSign t = match t with
+            | (s, f, d) -> (Sign.rev s, f, d)
+    end
+
+type t = Expr.t list
+
+let reduce t =
+    let aux i = List.fold_left
+        (fun acc e -> match acc, e with
+            | (s1, c1, d1), (s2, c2, d2) when d1 = d2 -> (Sign.add s1 s2, c1 +. c2, d1)
+            | _ -> acc
+        ) (Sign.Plus, 0., i) t
+    in
+    aux 2 :: aux 1 :: aux 0 :: []
+

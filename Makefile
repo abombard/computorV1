@@ -37,7 +37,7 @@ debug: 		sanity
 
 sanity:
 			# check that packages can be found
-			ocamlfind query batteries
+			# ocamlfind query menhir
 
 test: 		native
 			echo '[1, 2, "three", {"four": 4}]' | ./main.native

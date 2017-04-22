@@ -6,14 +6,17 @@
 
 rule token = parse
 | [' ' '\t' '\n']                               { token lexbuf }
-| ['-' '+']? "X" '^' ['0'-'2']+ as var          { VAR (
+| ['-' '+']? 'X' ('^' ['0'-'2']+)? as var       { VAR (
     let (sign, index_cur) = match String.get var 0 with
         | '+' -> ("+", 1)
         | '-' -> ("-", 1)
         | _   -> ("+", 0)
     in
-    let index_end = String.index var '^' in
-    let degree = String.sub var (index_end+1) (String.length var - (index_end+1)) in
+    let len = String.length var - 1 in
+    let index_degree = try (String.index var '^') + 1 with _ -> len in
+    let degree =
+        if index_degree = len then "1"
+        else String.sub var (index_degree) (len - (index_degree)) in
     (sign, degree)
 )}
 | ['-' '+']? ['0'-'9']+ '.'? ['0'-'9']* as coef { COEF ( coef ) }
