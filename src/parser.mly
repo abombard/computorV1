@@ -32,7 +32,7 @@ expr:
 token:
 | coef = COEF {
     let c = float_of_string coef in
-    Eq.Token.Coef (Eq.Sign.of_float c, abs_float c)
+    Eq.Token.Coef c
 }
 | var = VAR {
     let sign, degree = var in

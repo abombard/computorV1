@@ -38,28 +38,43 @@ module Sign =
 
 module Token =
     struct
-        type t = Coef of Sign.t * float
+        type t = Coef of float
                | Var of Sign.t * int
     end
 
 module Expr =
     struct
-        type t = Sign.t * float * int
+        type t = float * int
 
-        let to_string t = match t with
-            | sign, coef, degree -> Sign.to_string sign ^ string_of_float coef ^ if degree = 0 then "" else " * X" ^ if degree = 1 then "" else "^" ^ string_of_int degree
+        let to_string (coef, degree) =
+            let coef_to_string coef = match coef with
+                | 1.  when degree <> 0 -> ""
+                | -1. when degree <> 0 -> "-"
+                | coef when coef = float_of_int (int_of_float coef) -> string_of_int (int_of_float coef)
+                | _    -> string_of_float coef
+            in
+            let degree_to_string degree = match degree with
+                | 0 -> ""
+                | 1 -> "X"
+                | _ -> "X^" ^ string_of_int degree
+            in
+            let link =
+                if coef <> 1. && coef <> -1. && degree <> 0
+                then " * "
+                else ""
+            in
+            coef_to_string coef ^ link ^ degree_to_string degree
 
         let of_token t = match t with
-            | Token.Coef (sign, f)     -> ( sign, f, 0 )
-            | Token.Var (sign, degree) -> ( sign, 1., degree )
+            | Token.Coef f             -> (f                 , 0     )
+            | Token.Var (sign, degree) -> (Sign.to_float sign, degree)
 
-        let of_token2 t1 t2 =  match t1, t2 with
-            | Token.Coef (s1, coef), Token.Var (s2, degree) -> (Sign.add s1 s2, coef, degree)
-            | Token.Var (s2, degree), Token.Coef (s1, coef) -> (Sign.add s1 s2, coef, degree)
+        let of_token2 t1 t2 = match t1, t2 with
+            | Token.Coef coef, Token.Var (sign, degree)
+            | Token.Var (sign, degree), Token.Coef coef -> (Sign.to_float sign *. coef, degree)
             | _ -> invalid_arg "Expr.of_tokens"
 
-        let revSign t = match t with
-            | (s, f, d) -> (Sign.rev s, f, d)
+        let revSign (coef, degree) = (-.coef, degree)
     end
 
 type t = Expr.t list
@@ -67,9 +82,9 @@ type t = Expr.t list
 let reduce t =
     let aux i = List.fold_left
         (fun acc e -> match acc, e with
-            | (s1, c1, d1), (s2, c2, d2) when d1 = d2 -> (Sign.add s1 s2, c1 +. c2, d1)
+            | (c1, d1), (c2, d2) when d1 = d2 -> (c1 +. c2, d1)
             | _ -> acc
-        ) (Sign.Plus, 0., i) t
+        ) (0., i) t
     in
     aux 2 :: aux 1 :: aux 0 :: []
 
