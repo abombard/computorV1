@@ -28,6 +28,7 @@ op:
 expr:
 | t = token { Eq.Expr.of_token t }
 | t1 = token TIMES t2 = token { Eq.Expr.of_token2 t1 t2 }
+| t1 = token t2 = token { Eq.Expr.of_token2 t1 t2 }
 
 token:
 | coef = COEF {

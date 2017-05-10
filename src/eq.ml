@@ -80,11 +80,18 @@ module Expr =
 type t = Expr.t list
 
 let reduce t =
-    let aux i = List.fold_left
+    let collect i = List.fold_left
         (fun acc e -> match acc, e with
             | (c1, d1), (c2, d2) when d1 = d2 -> (c1 +. c2, d1)
             | _ -> acc
         ) (0., i) t
     in
-    aux 2 :: aux 1 :: aux 0 :: []
-
+    let degree_max l =
+        List.fold_left (fun acc (coef, degree) -> if degree > acc then degree else acc) 0 t
+    in
+    let aux l =
+        let rec new_list n nl =
+            if n < 0 then nl
+            else new_list (n-1) (collect n :: nl)
+       in new_list (degree_max l) []
+    in aux t

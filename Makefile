@@ -2,7 +2,7 @@
 # Pure OCaml, package from Opam, two directories
 #
 
-NAME = computorV1
+NAME = computor
 SOURCES = expr.ml main.ml
 
 # - The -I flag introduces sub-directories
