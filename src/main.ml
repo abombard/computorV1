@@ -17,8 +17,10 @@ let solve2 eq = match List.rev eq with
         let delta = b *. b -. 4. *. a *. c in
         match delta with
         | delta when delta < 0. -> Printf.printf
-            "Delta is strictly negative.\nTwo solutions complexes:\nx1=(-%.2g - i*sqrt(%.2g)) / %.2g\nx2=(-%.2g + i*sqrt(%.2g)) / %.2g\n"
-             b (-.delta) (2. *. a) b (-.delta) (2. *. a)
+            (* "Delta is strictly negative.\nTwo solutions complexes:\nx1=(-%.2g - i*sqrt %.2g) / %.2g\nx2=(-%.2g + i*sqrt %.2g) / %.2g\n"
+             b (-.delta) (2. *. a) b (-.delta) (2. *. a) *)
+            "Delta is strictly negative.\nTwo solutions complexes:\nx1=-%.2g - i*%.2g\nx2=-%.2g + i*%.2g\n"
+            (b /. 2. *. a) (sqrt (-.delta) /. 2. *. a) (b /. 2. *. a) (sqrt (-.delta) /. 2. *.a)
         | 0.                    -> Printf.printf "Delta is Nul.\nOne solution: x=%.2g\n" (-.b /. (2. *. a))
         | delta                 -> begin
             let x1 = (-.b -. sqrt delta) /. (2. *. a) in

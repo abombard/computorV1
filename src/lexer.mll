@@ -6,7 +6,7 @@
 
 rule token = parse
 | [' ' '\t' '\n']                               { token lexbuf }
-| ['-' '+']? 'X' ('^' ['0'-'9']+)? as var       { VAR (
+| ['-' '+']? ['X' 'x'] ('^' ['0'-'9']+)? as var       { VAR (
     let (sign, index_cur) = match String.get var 0 with
         | '+' -> ("+", 1)
         | '-' -> ("-", 1)
